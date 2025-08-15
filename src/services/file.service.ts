@@ -1,10 +1,10 @@
-import { myDataSource } from "../app.data-source.js";
-import { Client } from "../entities/client.entity.js";
-import { ClientAccount, IAccount } from "../entities/client_acount.entity.js";
+import { myDataSource } from "../app.data-source";
+import { Client } from "../entities/client.entity";
+import { ClientAccount, IAccount } from "../entities/client_acount.entity";
 import { isUUID } from "class-validator";
-import { SessionUser } from "../middleware/auth.middleware.js";
-import { FileMetadata, IFile } from "../entities/file_metadata.entity.js";
-import { ChatMessage, IChatMessage } from "../entities/message.entity.js";
+import { SessionUser } from "../middleware/auth.middleware";
+import { FileMetadata, IFile } from "../entities/file_metadata.entity";
+import { ChatMessage, IChatMessage } from "../entities/message.entity";
 
 const fileRepo = myDataSource.getRepository(FileMetadata)
 const accountRepo = myDataSource.getRepository(ClientAccount)

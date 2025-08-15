@@ -1,5 +1,5 @@
 import { Client, IClient } from "../entities/client.entity";
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { ServiceCategory } from "../entities/service-category.entity";
 import { SupportAgent } from "../entities/support-agent.entity";
 import { PhoneNumberUtil } from 'google-libphonenumber';

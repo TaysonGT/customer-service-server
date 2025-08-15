@@ -1,6 +1,6 @@
 import { Response, Request } from "express";
-import { FileService } from "../services/file.service.js";
-import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { FileService } from "../services/file.service";
+import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
 const fileService = new FileService()
 

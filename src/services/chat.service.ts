@@ -1,4 +1,4 @@
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { ChatMessage, IChatMessage } from "../entities/message.entity";
 import { Client } from "../entities/client.entity";
 import { SupportAgent } from "../entities/support-agent.entity";

@@ -1,5 +1,5 @@
 import { Response, Request } from "express";
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { ServiceCategory } from "../entities/service-category.entity";
 
 const categoryRepo = myDataSource.getRepository(ServiceCategory)

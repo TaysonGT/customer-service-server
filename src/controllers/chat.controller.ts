@@ -1,11 +1,11 @@
 import { Response, Request } from "express";
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { SupportAgent } from "../entities/support-agent.entity";
 import { Chat, IChat } from "../entities/chat.entity";
 import { ChatService } from "../services/chat.service";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { Client } from "../entities/client.entity";
-import { FileService } from "../services/file.service.js";
+import { FileService } from "../services/file.service";
 
 const agentRepo = myDataSource.getRepository(SupportAgent)
 const chatRepo = myDataSource.getRepository(Chat)
@@ -59,7 +59,7 @@ export class ChatController {
         .then((message)=>{
             res.json({ success: true, message });
         }).catch(error=>{
-            res.json({success:false, error})
+            res.json({success:false, message: error.message})
         })
     }
 

@@ -1,5 +1,5 @@
 import { PhoneNumberUtil } from "google-libphonenumber";
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { ServiceCategory } from "../entities/service-category.entity";
 import { ISupportAgent, SupportAgent } from "../entities/support-agent.entity";
 import supabase from "./supabase.service";

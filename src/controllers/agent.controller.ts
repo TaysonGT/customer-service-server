@@ -1,5 +1,5 @@
 import { Response, Request } from "express";
-import { myDataSource } from "../app.data-source.js";
+import { myDataSource } from "../app.data-source";
 import { SupportAgent } from "../entities/support-agent.entity";
 import { AgentService } from "../services/agent.service";
 
