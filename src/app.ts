@@ -34,3 +34,6 @@ myDataSource.initialize().then(()=>{
         console.log(`Started Express Server on Port: ${process.env.PORT}`)
     })
 }).catch(error=> console.error("DBError: ", error))
+
+
+export default app;
