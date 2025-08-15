@@ -5,8 +5,7 @@
   "scripts": {
     "start": "node dist/src/app",
     "dev": "nodemon dist/src/app",
-    "build": "tsc && vercel-build",
-    "vercel-build": "cp -r public dist/public || true"
+    "build": "rm -rf dist && tsc"
   },
   "author": "",
   "license": "ISC",
