@@ -84,7 +84,7 @@ export class ChatService{
         const chatsWithParticipants = chats.map((chat)=>({
             ...chat,
             lastMessage: chat.messages? chat.messages[chat.messages.length-1] : null,
-            unread_messages: chat.messages?.filter(m => m.status !== 'seen').length ?? 0,
+            unread_messages: chat.messages?.filter(m => m.senderId !== userId && m.status !== 'seen'),
             participants:[
                 ...chat.supportAgents.map(a => ({
                     id: a.id,
@@ -130,7 +130,7 @@ export class ChatService{
         const chatsWithParticipants = chats.map((chat)=>({
             ...chat,
             lastMessage: chat.messages? chat.messages[chat.messages.length-1] : null,
-            unread_messages: chat.messages?.filter(m => m.status !== 'seen').length ?? 0,
+            unread_messages: chat.messages?.filter(m => m.status !== 'seen' && m.senderId!==userId),
             participants:[
                 ...chat.supportAgents.map(a => ({
                     id: a.id,
