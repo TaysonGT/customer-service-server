@@ -2,6 +2,7 @@ import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne, ManyToMany
 import { Client } from './client.entity';
 import { ServiceCategory } from './service-category.entity';
 import { Chat } from './chat.entity';
+import { Ticket } from './ticket.entity';
 
 export interface ISupportAgent {
   firstname: string;
@@ -69,6 +70,9 @@ export class SupportAgent{
 
   @OneToMany(()=>Client, (client)=>client.supportAgent)
   clients: Client[];
+
+  @OneToMany(()=>Ticket, (ticket)=>ticket.assignee)
+  assignedTickets: Ticket[];
 
   @ManyToMany(()=>Chat, (chat)=>chat.supportAgents)
   chats: Chat[];
