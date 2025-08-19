@@ -9,8 +9,8 @@ export class ClientController {
         const data = req.body
         
         await clientService.newClient(data)
-        .then((client)=>
-            res.status(201).json({success: true, message: 'Client created successfully', client})
+        .then(({user})=>
+            res.status(201).json({success: true, message: 'Client created successfully', user})
         ).catch((error)=>
             res.status(400).json({success: false, message: error.message})
         )
@@ -19,6 +19,11 @@ export class ClientController {
     async allClients(req: Request, res: Response){
         const clients = await clientService.allClients()
         res.json({success:true, clients})
+    }
+
+    async allUsers(req: Request, res: Response){
+        const users = await clientService.allUsers()
+        res.json({success:true, users})
     }
     
     async getClient(req: Request, res: Response){

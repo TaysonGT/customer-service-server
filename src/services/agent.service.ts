@@ -1,11 +1,11 @@
 import { PhoneNumberUtil } from "google-libphonenumber";
 import { myDataSource } from "../app.data-source";
 import { ServiceCategory } from "../entities/service-category.entity";
-import { ISupportAgent, SupportAgent } from "../entities/support-agent.entity";
 import supabase from "./supabase.service";
-import {v4 as uuidV4} from 'uuid'
+import { IUser, User } from "../entities/user.entity";
+import { AdminProfile } from "../entities/admin-profile.entity";
 
-const agentRepo = myDataSource.getRepository(SupportAgent)
+const userRepo = myDataSource.getRepository(User)
 const phoneUtil = PhoneNumberUtil.getInstance()
 
 export class AgentService{
@@ -13,8 +13,8 @@ export class AgentService{
     constructor(
     ){}
 
-    async newAgent(data: ISupportAgent) {
-        if (data.password !== data.confirmPassword) {
+    async newAgent(data: any) {
+        if (data.password && data.password !== data.confirmPassword) {
             throw new Error("Password confirmation doesn't match");
         }
         
@@ -33,28 +33,55 @@ export class AgentService{
         if (!data.username) {
             throw new Error("No Username provided");
         }
+
+        if (!data.categoryId) {
+            throw new Error("No Category Id provided");
+        }
         const trimmedUsername = data.username.toLowerCase().trim()
         const trimmedPassword = data.password.trim()
 
         // Transaction for data consistency
-        return agentRepo.manager.transaction(async (transactionalEntityManager) => {
+        return userRepo.manager.transaction(async (transactionalEntityManager) => {            
+            const existingUser = await transactionalEntityManager.findOne(User, { 
+                where: [
+                    { username: trimmedUsername },
+                    { email: data.email }
+                ]
+            });
+
+            if (existingUser) {
+                throw new Error('Username or email already exists');
+            }
             // Get related category
             const category = await transactionalEntityManager.findOne(ServiceCategory, {
                 where: { id: data.categoryId }
             });
-
+            
             if (!category) throw new Error('Category not found');
-            const userId = uuidV4();
+
+            const userData:IUser = {
+                firstname: data.firstname,
+                lastname: data.lastname,
+                username: trimmedUsername,
+                email: data.email,
+                avatarUrl: data.avatarUrl,
+                serviceCategory: category,
+                phone: fullNumber
+            }
+            // Create agent instance
+            const user = userRepo.create(userData);
+
+            await transactionalEntityManager.save(user).catch(error=>{throw error})
 
             const { data: authData, error } = await supabase.auth.admin.createUser({
                 email: data.email,
                 password: trimmedPassword,
                 email_confirm: true,
                 user_metadata: {
-                    id: userId,
+                    id: user.id,
                     firstname: data.firstname,
                     lastname: data.lastname,
-                    role: 'support_agent',
+                    role: 'support',
                     avatarUrl: data.avatarUrl
                 }
             });
@@ -64,24 +91,22 @@ export class AgentService{
                 throw new Error('Authentication service error');
             }
 
-            // Create agent instance
-            const agent = agentRepo.create({
-                id: userId,
-                sb_uid: authData.user.id,
-                firstname: authData.user.user_metadata.firstname,
-                lastname: authData.user.user_metadata.lastname,
-                username: trimmedUsername,
-                email: authData.user.email,
-                birthdate: new Date(data.birthdate),
-                address: data.address,
-                description: data.description,
-                serviceCategory: category, // Use the actual entity
-                avatarUrl: data.avatarUrl,
-                phone: fullNumber
+            const adminProfile = transactionalEntityManager.create(AdminProfile, {
+                // createdBy: currentUser,
+                user,
+                title: data.title,
+                role: data.role,
+                permissions: data.permissions,
             });
 
+            user.sb_uid = authData.user.id;
+            user.adminProfile = adminProfile;
+            
+            await transactionalEntityManager.save(adminProfile)
+            await transactionalEntityManager.save(user)
+
             // Explicit save operation
-            return await transactionalEntityManager.save(agent);
+            return {user, adminProfile};
         });
     }
 
@@ -100,7 +125,7 @@ export class AgentService{
         const trimmedUsername = data.username.trim().toLowerCase();
         const trimmedPassword = data.password.trim();
 
-        const user = await agentRepo.findOne({where: {username: trimmedUsername}})
+        const user = await userRepo.findOne({where: {username: trimmedUsername}, relations:{adminProfile: true, clientProfile: true}})
         
         if(!user) throw new Error('User not found')
 
@@ -118,20 +143,11 @@ export class AgentService{
             firstname: user.firstname,
             lastname: user.lastname,
             email: user.email,
-            role: 'support_agent',
+            role: user.adminProfile? user.adminProfile.role: 'client',
+            profile: user.adminProfile || user.clientProfile || null,
             avatarUrl: user.avatarUrl
         }
 
         return {safeUser, authData, expires}
-    }
-
-    
-    async getAgentByUsername(username:string){
-        if(!username) throw new Error('No username provided');
-            
-        const user = await agentRepo.findOne({where:{username:username.toLowerCase().trim()}})
-
-        if(!user) throw new Error('User not found');
-        return user
     }
 }

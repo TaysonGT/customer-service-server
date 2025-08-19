@@ -1,9 +1,12 @@
 import { Response, Request } from "express";
 import { myDataSource } from "../app.data-source";
-import { SupportAgent } from "../entities/support-agent.entity";
+import { AdminProfile } from "../entities/admin-profile.entity";
+import { User } from "../entities/user.entity";
 import { AgentService } from "../services/agent.service";
 
-const agentRepo = myDataSource.getRepository(SupportAgent)
+const agentRepo = myDataSource.getRepository(AdminProfile)
+const userRepo = myDataSource.getRepository(User)
+
 const agentService = new AgentService()
 export class AgentController {
     async getAllAgents(req: Request, res: Response){
@@ -21,9 +24,10 @@ export class AgentController {
         const data = req.body
 
         agentService.newAgent(data)
-        .then((supportAgent)=>{
-            res.status(201).json({message: 'Support Agent created successfully', success: true, supportAgent})
+        .then(({user})=>{
+            res.status(201).json({message: 'Support Agent created successfully', success: true, user})
         }).catch((error)=>{
+            console.log(error)
             res.status(400).json({message: error.message, success: false})
         })
         
@@ -32,7 +36,9 @@ export class AgentController {
     async getCategoryAgents(req: Request, res: Response){
         const {categoryId} = req.params
         
-        const agents = await agentRepo.find({where: {serviceCategory: {id: categoryId}}})
+        const agents = await userRepo.createQueryBuilder('user')
+        .innerJoin('category.agents', 'category', 'category.id = :categoryId', {categoryId})
+        .getMany()
 
         res.json({success:true, agents})
     }

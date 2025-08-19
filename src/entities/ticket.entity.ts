@@ -8,11 +8,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToMany,
-  JoinTable
+  JoinTable,
+  OneToOne
 } from 'typeorm';
-import { Client } from './client.entity';
-import { SupportAgent } from './support-agent.entity';
 import { FileMetadata } from './file_metadata.entity';
+import { User } from './user.entity';
+import { Chat } from './chat.entity';
 
 export enum TicketStatus {
   OPEN = 'open',
@@ -40,13 +41,13 @@ export class Ticket {
   @Column('text')
   description: string;
 
-  @ManyToOne(() => Client, (client) => client.submittedTickets)
+  @ManyToOne(() => User, (user) => user.submittedTickets)
   @JoinColumn({ name: 'requester_id' })
-  requester: Client;
+  requester: User;
 
-  @ManyToOne(() => SupportAgent, (agent) => agent.assignedTickets, { nullable: true })
+  @ManyToOne(() => User, (user) => user.assignedTickets, { nullable: true })
   @JoinColumn({ name: 'assignee_id' })
-  assignee: SupportAgent | null;
+  assignee?: User | null;
 
   @Column({
     type: 'enum',
@@ -65,12 +66,15 @@ export class Ticket {
   @Column({ nullable: true })
   category: string;
 
+  @OneToOne(() => Chat, (chat) => chat.ticket)
+  chat: Chat;
+
   @OneToMany(() => FileMetadata, (file) => file.ticket)
   attachments: FileMetadata[];
 
-  @ManyToMany(() => SupportAgent)
+  @ManyToMany(() => User)
   @JoinTable({ name: 'ticket_cc_agents' })
-  ccRecipients: SupportAgent[];
+  ccRecipients: User[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

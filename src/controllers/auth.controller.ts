@@ -1,53 +1,22 @@
 import { Response, Request } from "express";
-import { ClientService } from "../services/client.service";
-import { AgentService } from "../services/agent.service";
 import supabase from "../services/supabase.service";
+import { AuthService } from "../services/auth.service";
+import { UserRole } from "../entities/user.entity";
+import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
-
-const clientService = new ClientService()
-const agentService = new AgentService()
+const authService = new AuthService()
 
 export class AuthController {
 
 
-    async loginClient(req: Request, res: Response){
+    async loginUser(req: Request, res: Response){
         const data:{username: string, password: string, remember: boolean} = req.body
+        if(req.params.role!=='admin' && req.params.role!=='client') {
+            res.json({success: false, message: 'Invalid role'})
+            return 
+        }
 
-        clientService.login(data)
-        .then(({safeUser, authData, expires})=>{
-            res.cookie('sb_access_token', authData.session.access_token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: expires
-            })
-            res.cookie('sb_refresh_token', authData.session.refresh_token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-            })
-            res.cookie('current_user', JSON.stringify(safeUser), {
-                httpOnly: false,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: expires
-            })
-            res.json({
-                message: "Login Successful",
-                success: true,
-                user: safeUser
-            })
-        }).catch((error)=>{
-            res.json({message: error.message, success: false});
-        })
-    }
-
-    
-    async loginAgent(req: Request, res: Response){
-        const data:{username: string, password: string, remember: boolean} = req.body
-
-        agentService.login(data)
+        authService.login(data, req.params.role as UserRole)
         .then(({safeUser, authData, expires})=>{
             res.cookie('sb_access_token', authData.session.access_token, {
                 httpOnly: true,
@@ -108,18 +77,29 @@ export class AuthController {
     async resolveUsername(req: Request, res: Response) {
         try{
             const data = req.body;
-            if(req.params.role === 'client') {
-                const user = await clientService.getClientByUsername(data.username);
-                res.status(200).json({ success:true, email: user.email });
-            } else if(req.params.role === 'support_agent') {
-                const user = await agentService.getAgentByUsername(data.username);
-                res.status(200).json({ success:true, email: user.email });
-                return
-            } else {
-                res.status(400).json({ success:false, error: 'Invalid role' });
-            }
+            const user = await authService.getUserByUsername(data.username);
+            res.status(200).json({ success:true, email: user.email });            
         }catch (error) {
             res.status(404).json({ success:false, error: error.message || 'Username not found' });
+        }
+    }
+
+    async getUserById(req: Request, res: Response) {
+        try{
+            const {id} = req.params;
+            const user = await authService.getUserById(id);
+            res.status(200).json({ success:true, user });            
+        }catch (error) {
+            res.status(404).json({ success:false, error: error.message || 'User not found' });
+        }
+    }
+
+    async getMyProfile(req: AuthenticatedRequest, res: Response) {
+        try{
+            const user = await authService.getMyUser(req.user);
+            res.status(200).json({ success:true, user });            
+        }catch (error) {
+            res.status(404).json({ success:false, error: error.message || 'User not found' });
         }
     }
 }

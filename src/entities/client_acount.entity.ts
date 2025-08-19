@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, JoinColumn, UpdateDateColumn } from 'typeorm'
-import { Client } from './client.entity';
+import { User } from './user.entity';
 
 export interface IAccount {
   email: string;
@@ -40,9 +40,9 @@ export class ClientAccount{
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Client, (client) => client.files, { 
+  @ManyToOne(() => User, (user) => user.accounts, { 
     onDelete: 'CASCADE' // Optional but recommended
   })
   @JoinColumn({ name: 'client_id' }) // Explicit column name
-  client: Client;
+  user: User;
 }

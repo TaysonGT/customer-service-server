@@ -1,10 +1,10 @@
 import { myDataSource } from "../app.data-source";
-import { Client } from "../entities/client.entity";
 import { ClientAccount, IAccount } from "../entities/client_acount.entity";
 import { isUUID } from "class-validator";
 import { SessionUser } from "../middleware/auth.middleware";
 import { FileMetadata, IFile } from "../entities/file_metadata.entity";
 import { ChatMessage, IChatMessage } from "../entities/message.entity";
+import { User } from "../entities/user.entity";
 
 const fileRepo = myDataSource.getRepository(FileMetadata)
 const accountRepo = myDataSource.getRepository(ClientAccount)
@@ -15,18 +15,17 @@ export class FileService{
     constructor(
     ){}
 
-    async newClientFile(data: IFile, user: SessionUser) {
+    async newUserFile(data: IFile, user: SessionUser) {
         if (!data.path) {
             throw new Error("No image is provided");
         }
 
         return fileRepo.manager.transaction(async (transactionalEntityManager) => {
-            // Get related category
-            const client = await transactionalEntityManager.findOne(Client, {
+            const uploader = await transactionalEntityManager.findOne(User, {
                 where: { id: user.id }
             });
 
-            if (!client) throw new Error('Client not found');
+            if (!uploader) throw new Error('Client not found');
 
             // Create file instance
             const file = fileRepo.create({
@@ -35,7 +34,7 @@ export class FileService{
                 size: data.size,
                 type: data.type,
                 path: data.path,
-                client,
+                user: uploader
             });
 
             // Explicit save operation
@@ -46,11 +45,11 @@ export class FileService{
     async newClientAccount(data: IAccount) {
         return accountRepo.manager.transaction(async (transactionalEntityManager) => {
             // Get related category
-            const client = await transactionalEntityManager.findOne(Client, {
+            const user = await transactionalEntityManager.findOne(User, {
                 where: { id: data.clientId }
             });
 
-            if (!client) throw new Error('Client not found');
+            if (!user) throw new Error('User not found');
 
             // Create file instance
             const account = accountRepo.create({
@@ -60,7 +59,7 @@ export class FileService{
                 lastname: data.lastname,
                 phone: data.phone,
                 avatarUrl: data.avatarUrl,
-                client,
+                user,
             });
 
             // Explicit save operation

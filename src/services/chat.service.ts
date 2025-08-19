@@ -1,13 +1,12 @@
 import { myDataSource } from "../app.data-source";
 import { ChatMessage, IChatMessage } from "../entities/message.entity";
-import { Client } from "../entities/client.entity";
-import { SupportAgent } from "../entities/support-agent.entity";
 import { Chat } from "../entities/chat.entity";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import supabase from "./supabase.service";
+import { User } from "../entities/user.entity";
+import { isUUID } from "class-validator";
 
-const clientRepo = myDataSource.getRepository(Client)
-const agentRepo = myDataSource.getRepository(SupportAgent)
+const userRepo = myDataSource.getRepository(User)
 const chatRepo = myDataSource.getRepository(Chat)
 const messageRepo = myDataSource.getRepository(ChatMessage)
 
@@ -16,9 +15,7 @@ export class ChatService{
     constructor(){}
 
     async validateSender(userId: string, role: string): Promise<boolean> {
-        const exists = role === 'client'
-        ? await clientRepo.existsBy({ id: userId })
-        : await agentRepo.existsBy({ id: userId });
+        const exists = await userRepo.existsBy({ id: userId })
         return exists
     }
     
@@ -70,86 +67,34 @@ export class ChatService{
             .subscribe();
     }
 
-    async getClientChats(userId: string){
-        const chats = await chatRepo.find({
-            where: { client: { id: userId } },
-            relations: {
-                client: true,
-                supportAgents: true,
-                messages: true
-            }, // Include related entities
-            order: { messages: {createdAt: 'ASC'} } // Newest chats first
-        });
+    async getUserChats(userId: string){
+        const isValid = isUUID(userId)
+
+        if(!isValid) throw new Error('Invalid user_id')
+
+        const chats = await chatRepo
+        .createQueryBuilder('chats')
+        .leftJoinAndSelect('chats.messages', 'message')
+        .leftJoinAndSelect('chats.users', 'users')
+        .leftJoinAndSelect('users.clientProfile', 'clientProfile')
+        .where('users.id = :userId', { userId })
+        .orderBy('message.createdAt', 'ASC')
+        .getMany()
 
         const chatsWithParticipants = chats.map((chat)=>({
             ...chat,
             lastMessage: chat.messages? chat.messages[chat.messages.length-1] : null,
             unread_messages: chat.messages?.filter(m => m.senderId !== userId && m.status !== 'seen'),
             participants:[
-                ...chat.supportAgents.map(a => ({
-                    id: a.id,
-                    username: a.username,
-                    firstname: a.firstname,
-                    lastname: a.lastname,
-                    avatarUrl: a.avatarUrl,
-                    role: 'support_agent' as const,
-                    email: a.email
-                })),
-                ...(chat.client?[{ 
-                    id: chat.client.id,
-                    username: chat.client.username,
-                    firstname: chat.client.firstname,
-                    lastname: chat.client.lastname,
-                    avatarUrl: chat.client.avatarUrl,
-                    role: 'client' as const,
-                    email: chat.client.email
-                }]:[])
-            ]
-        }))
-
-        const soleChats = chatsWithParticipants.map((chat) => {
-            const { ['messages']: prop1, ...rest } = chat;
-            return rest;
-        });
-
-        return soleChats;
-    }
-
-    async getAgentChats(userId: string){
-        const chats = await chatRepo.find({
-            where: { supportAgents: { id: userId } },
-            relations: {
-                supportAgents: true,
-                client: true,
-                messages: true,
-            }, // Include related entities
-            order: { messages: {createdAt: 'ASC'} } // Newest chats first
-        });
-
-        
-        const chatsWithParticipants = chats.map((chat)=>({
-            ...chat,
-            lastMessage: chat.messages? chat.messages[chat.messages.length-1] : null,
-            unread_messages: chat.messages?.filter(m => m.status !== 'seen' && m.senderId!==userId),
-            participants:[
-                ...chat.supportAgents.map(a => ({
-                    id: a.id,
-                    username: a.username,
-                    firstname: a.firstname,
-                    lastname: a.lastname,
-                    avatarUrl: a.avatarUrl,
-                    role: 'support_agent' as const,
-                    email: a.email
-                })),
-                ...(chat.client?[{ 
-                    id: chat.client.id,
-                    username: chat.client.username,
-                    firstname: chat.client.firstname,
-                    lastname: chat.client.lastname,
-                    avatarUrl: chat.client.avatarUrl,
-                    role: 'client' as const,
-                    email: chat.client.email
-                }]:[])
+                ...chat.users.map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    avatarUrl: user.avatarUrl,
+                    role: user.adminProfile? user.adminProfile.role : 'client',
+                    email: user.email
+                }))
             ]
         }))
 
@@ -164,23 +109,13 @@ export class ChatService{
     async getMessages(chatId: string, limit?: number, cursor?: string) {
         const query = messageRepo
         .createQueryBuilder('message')
-        .leftJoinAndSelect('message.file', 'file') // Simplified join condition
-        .leftJoinAndMapOne(
-            'message.sender',
-            Client,
-            'client',
-            'message.senderId = client.id AND message.senderType = :clientType',
-            { clientType: 'client' }
-        )
-        .leftJoinAndMapOne(
-            'message.sender',
-            SupportAgent,
-            'agent',
-            'message.senderId = agent.id AND message.senderType = :agentType',
-            { agentType: 'support_agent' }
-        )
+        .leftJoinAndSelect('message.file', 'file')
+        .leftJoinAndMapOne('message.sender', User, 'user')
+        .leftJoinAndSelect('user.clientProfile', 'clientProfile')
+        .leftJoinAndSelect('user.adminProfile', 'adminProfile')
         .where('message.chatId = :chatId', { chatId })
-        .orderBy('message.createdAt', 'DESC');
+        .orderBy('message.createdAt', 'DESC')
+        
         if (cursor) {
             query.andWhere('message.createdAt < :cursor', {
             cursor: new Date(cursor),

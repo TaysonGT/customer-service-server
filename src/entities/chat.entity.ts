@@ -1,12 +1,12 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn, JoinTable} from 'typeorm'
-import { Client } from './client.entity';
-import { SupportAgent } from './support-agent.entity';
+import {Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToMany, CreateDateColumn, UpdateDateColumn, JoinTable, OneToOne, JoinColumn} from 'typeorm'
 import { ChatMessage } from './message.entity';
+import { User } from './user.entity';
+import { Ticket } from './ticket.entity';
 
 export interface IChat {
   title: string;
   description: string;
-  client_id: string;
+  ticketId: string;
 }
 
 @Entity('chats')
@@ -25,29 +25,32 @@ export class Chat{
 
   @Column({default: 'waiting'})
   status: 'waiting'|'active'|'ended';
-  
-  @Column({default: false})
-  unread: boolean;
+
+  @OneToOne(()=>Ticket, (ticket) => ticket.chat, {onDelete: 'CASCADE', onUpdate: 'CASCADE'})
+  @JoinColumn({name: 'ticket_id'})
+  ticket: Ticket
 
   @CreateDateColumn()
   startedAt: Date;
   
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @ManyToOne(() => Client, (client) => client.chats, { 
-    onDelete: 'CASCADE' // Optional but recommended
+  
+  @ManyToMany(() => User, (user) => user.chats,{
+    onDelete: 'CASCADE', // Optional but recommended
   })
-  @JoinColumn({ name: 'client_id' }) // Explicit column name
-  client: Client;
-
-  @ManyToMany(() => SupportAgent, (agent) => agent.chats)
   @JoinTable({
-    name: 'chat_agents', // Explicit join table name
-    joinColumn: { name: 'chat_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'agent_id', referencedColumnName: 'id' }
+    name: 'chat_users', // Explicit join table name
+    joinColumn: {
+      name: 'chat_id',
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id'
+    }
   })
-  supportAgents: SupportAgent[];
+  users: User[];
 
   @OneToMany(() => ChatMessage, (message) => message.chat, {
     cascade: true // Optional for automatic saves

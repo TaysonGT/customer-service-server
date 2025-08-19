@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
 import { ChatMessage } from './message.entity';
-import { Client } from './client.entity';
 import { Ticket } from './ticket.entity';
+import { User } from './user.entity';
 
 export interface IFile {
   path: string;
@@ -53,11 +53,11 @@ export class FileMetadata {
   @JoinColumn({name: 'message_id'})
   message?: ChatMessage;
 
-  @ManyToOne(() => Client, (client) => client.files, { 
+  @ManyToOne(() => User, (user) => user.files, { 
     onDelete: 'CASCADE'
   })
-  @JoinColumn({ name: 'client_id' })
-  client?: Client;
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
 
   @ManyToOne(() => Ticket, (ticket) => ticket.attachments, { 
     onDelete: 'CASCADE'

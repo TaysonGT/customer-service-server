@@ -1,15 +1,12 @@
-import { Client, IClient } from "../entities/client.entity";
 import { myDataSource } from "../app.data-source";
 import { ServiceCategory } from "../entities/service-category.entity";
-import { SupportAgent } from "../entities/support-agent.entity";
 import { PhoneNumberUtil } from 'google-libphonenumber';
 import { isUUID } from "class-validator";
 import supabase from "./supabase.service";
-import {v4 as uuidV4} from 'uuid'
+import { User } from "../entities/user.entity";
+import { ClientProfile } from "../entities/client-profile.entity";
 
-const clientRepo = myDataSource.getRepository(Client)
-// const categoryRepo = myDataSource.getRepository(ServiceCategory)
-const agentRepo = myDataSource.getRepository(SupportAgent)
+const userRepo = myDataSource.getRepository(User)
 const phoneUtil = PhoneNumberUtil.getInstance()
 
 export class ClientService{
@@ -18,7 +15,7 @@ export class ClientService{
         
     ){}
 
-    async newClient(data: IClient): Promise<Client> {
+    async newClient(data: any) {
         // Validation
         if (!data.username || !data.password) {
             throw new Error('Username and password are required');
@@ -30,18 +27,14 @@ export class ClientService{
             throw new Error("Password confirmation doesn't match");
         }
 
+        const trimmedUsername = data.username.toLowerCase().trim()
+        const trimmedPassword = data.password.trim()
+
         const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         // Email validation
         if (!emailRegex.test(data.email)) {
             throw new Error('Invalid email format');
         }
-
-        const emailExists =
-            (await clientRepo.findOne({ where: { email:data.email } })) ||
-            (await agentRepo.findOne({ where: { email:data.email } }));
-
-        if (emailExists) throw new Error("Email already in use");
-        
         // Phone validation
         const number = phoneUtil.parse(data.phone, data.countryCode || 'EG');
         if (!phoneUtil.isValidNumberForRegion(number, data.countryCode || 'EG')) {
@@ -50,29 +43,51 @@ export class ClientService{
         const fullNumber = `+${number.getCountryCode()}${number.getNationalNumber()}`;
 
         // Transaction for data consistency
-        return clientRepo.manager.transaction(async (transactionalEntityManager) => {
+        return userRepo.manager.transaction(async (transactionalEntityManager) => {
+            const existingUser = await transactionalEntityManager.findOne(User, { 
+                where: [
+                    { username: trimmedUsername },
+                    { email: data.email }
+                ]
+            });
+
+            if (existingUser) {
+                throw new Error('Username or email already exists');
+            }
+            
             // Get related entities
             const [category, agent] = await Promise.all([
-            transactionalEntityManager.findOne(ServiceCategory, {
-                where: { id: data.categoryId }
-            }),
-            transactionalEntityManager.findOne(SupportAgent, {
-                where: { id: data.supportId }
-            })
+                transactionalEntityManager.findOne(ServiceCategory, {
+                    where: { id: data.categoryId }
+                }),
+                transactionalEntityManager.findOne(User, {
+                    where: { id: data.agentId }
+                })
             ]);
 
             if (!category) throw new Error('Category not found');
             if (!agent) throw new Error('Agent not found');
+            
+            const user = transactionalEntityManager.create(User, {
+                firstname: data.firstname,
+                lastname: data.lastname,
+                username: trimmedUsername,
+                email: data.email,
+                gender: data.gender,
+                description: data.description,
+                createdBy: agent,
+            })
 
-            const userId = uuidV4()
+            await transactionalEntityManager.save(user).catch(error=>{throw error})
 
             // Create client
             const { data: authData, error } = await supabase.auth.admin.createUser({
                 email: data.email,
-                password: data.password,
+                password: trimmedPassword,
                 email_confirm: true,
                 user_metadata: {
-                    id: userId,
+                    id: user.id,
+                    username: trimmedUsername,
                     firstname: data.firstname,
                     lastname: data.lastname,
                     role: 'client',
@@ -86,84 +101,55 @@ export class ClientService{
             }
 
             // Create client
-            const client = transactionalEntityManager.create(Client, {
-                id: userId,
-                sb_uid: authData.user.id,
-                firstname: authData.user.user_metadata.firstname,
-                lastname: authData.user.user_metadata.lastname,
-                email: authData.user.email,
-                username: data.username.toLowerCase(),
-                gender: data.gender,
-                description: data.description,
-                serviceCategory: { id: data.categoryId }, // Reference by ID
-                supportAgent: { id: data.supportId }, // Reference by ID
+            const clientProfile = transactionalEntityManager.create(ClientProfile, {
+                user,
                 avatarUrl: data.avatarUrl,
-                phone: fullNumber
+                phone: fullNumber,
+                company: data.company,
+                jobTitle: data.jobTitle,
+                clientType: data.clientType,
+                status: data.status,
+                leadSource: data.leadSource,
+                address: data.address,
+                socialProfiles: data.socialProfiles
             });
 
-            return await transactionalEntityManager.save(client);
+            user.sb_uid = authData.user.id;
+            user.clientProfile = clientProfile;
+
+            await transactionalEntityManager.save(clientProfile), 
+            await transactionalEntityManager.save(user)
+
+            return {user, clientProfile}
         });
     }
     
+    async allClients(){
+        const clients = await userRepo
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.clientProfile', 'clientProfile')
+        .getMany()
 
-    async login(data: {username: string, password: string, remember: boolean}){
-        let expires = 2 * 60 * 60 * 1000
-
-        if(data.remember) expires = 8 * 1000 * 60 * 60;
-
-        if(!data.password || !data.username){
-            throw new Error('Please fill all the fields')
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(data.username.toLowerCase())) {
-            throw new Error('Invalid characters in username');
-        }
-
-        const trimmedUsername = data.username.trim().toLowerCase();
-        const trimmedPassword = data.password.trim();
-
-        const user = await clientRepo.findOne({where: {username: trimmedUsername}})
-        
-        if(!user) throw new Error('User not found')
-            
-        const { data: authData, error } = await supabase.auth.signInWithPassword({
-            email: user.email,
-            password: trimmedPassword
-        });
-
-        if (error) {
-            throw new Error(error.message || 'Authentication failed');
-        }
-
-        const safeUser = {
-            id: user.id,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            email: user.email,
-            role: 'client',
-            avatarUrl: user.avatarUrl
-        }
-
-        return {safeUser, authData, expires}
+        return clients
     }
 
-    async allClients(){
-        return await clientRepo.find()
+    async allUsers(){
+        const users = await userRepo.find({relations:{adminProfile: true, clientProfile: true}})
+
+        return users
     }
     
     async getClientById(id:string){
         const isValid = isUUID(id)
         
         if(!isValid) throw new Error('Invalid user_id')
-            
-        return await clientRepo.findOne({where:{id}})
-    }
 
-    async getClientByUsername(username:string){
-        if(!username) throw new Error('No username provided');
+        const client = await userRepo
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.clientProfile', 'clientProfile')
+        .where('user.id = :userId', { userId: id })
+        .getOne()
             
-        const user = await clientRepo.findOne({where:{username:username.toLowerCase().trim()}})
-
-        if(!user) throw new Error('User not found');
-        return user
+        return client
     }
 }

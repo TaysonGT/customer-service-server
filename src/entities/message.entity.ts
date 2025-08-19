@@ -1,9 +1,8 @@
 import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index, CreateDateColumn, OneToOne} from 'typeorm'
-import { Client } from './client.entity';
-import { SupportAgent } from './support-agent.entity';
 import { Chat } from './chat.entity';
 import {IsIn, IsString, IsUUID, MaxLength} from 'class-validator'
 import { FileMetadata } from './file_metadata.entity';
+import { User } from './user.entity';
 
 export class IChatMessage {
   id:string;
@@ -70,19 +69,12 @@ export class ChatMessage {
   file?: FileMetadata;
 
   // Virtual relations (TypeORM will hydrate these based on senderType)
-  @ManyToOne(() => Client, { 
+  @ManyToOne(() => User, {
     nullable: true,
     createForeignKeyConstraints: false 
   })
   @JoinColumn([{ name: 'senderId', referencedColumnName: 'id' }])
-  clientSender?: Client;
-
-  @ManyToOne(() => SupportAgent, { 
-    nullable: true,
-    createForeignKeyConstraints: false 
-  })
-  @JoinColumn([{ name: 'senderId', referencedColumnName: 'id' }])
-  agentSender?: SupportAgent;
+  sender?: User;
 
   @ManyToOne(()=>Chat, (chat)=>chat.messages)
   @JoinColumn({name: 'chatId'})

@@ -1,6 +1,5 @@
 import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from 'typeorm'
-import { Client } from './client.entity';
-import { SupportAgent } from './support-agent.entity';
+import { User } from './user.entity';
 
 export interface IServiceCategory {
   title: string;
@@ -18,10 +17,7 @@ export class ServiceCategory{
   @Column()
   description: string;
 
-  @OneToMany(()=>Client, (client)=>client.serviceCategory)
-  clients: Client[];
-
-  @OneToMany(()=>SupportAgent, (agent)=>agent.serviceCategory)
-  supportAgents: SupportAgent[];
+  @OneToMany(()=>User, (agent)=>agent.serviceCategory)
+  agents: User[];
 
 }

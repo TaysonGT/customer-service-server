@@ -5,6 +5,7 @@ const clientController = new ClientController()
 const clientRouter = express.Router()
 
 clientRouter.get('/', clientController.allClients)
+clientRouter.get('/allUsers', clientController.allUsers)
 clientRouter.get('/:id', clientController.getClient)
 clientRouter.post('/', clientController.createClient)
 

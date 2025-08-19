@@ -10,6 +10,5 @@ clientDataRouter.get('/docs/:clientId', clientDataController.getDocs)
 clientDataRouter.get('/images/:clientId', clientDataController.getImages)
 clientDataRouter.post('/images/client', authenticate, clientDataController.createFile)
 clientDataRouter.get('/:id', clientDataController.getFile)
-// clientDataRouter.post('/', clientDataController.createFile)
 
 export default clientDataRouter

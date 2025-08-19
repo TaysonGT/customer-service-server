@@ -34,7 +34,7 @@ export class ClientDataController {
 
         console.log(req.user)
 
-        fileService.newClientFile(data, req.user)
+        fileService.newUserFile(data, req.user)
         .then((file)=>{
             res.status(201).json({message: 'File created successfully', success: true, file})
         }).catch((error)=>{
