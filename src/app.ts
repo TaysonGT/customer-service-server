@@ -7,7 +7,7 @@ import agentRouter from './routes/agent.route'
 import clientRouter from './routes/client.route'
 import authRouter from './routes/auth.route'
 import chatRouter from './routes/chat.route'
-import clientDataRouter from './routes/clientData.route'
+import userDataRouter from './routes/user-data.route'
 import categoryRouter from './routes/category.route'
 const app = express()
 
@@ -26,7 +26,7 @@ app.set('trust proxy', 1)
 
 // API routes
 app.use('/auth', authRouter)
-app.use('/data', clientDataRouter)
+app.use('/data', userDataRouter)
 app.use('/chats', chatRouter)
 app.use('/clients', clientRouter)
 app.use('/support_agents', agentRouter)

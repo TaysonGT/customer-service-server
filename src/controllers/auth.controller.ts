@@ -77,7 +77,7 @@ export class AuthController {
     async resolveUsername(req: Request, res: Response) {
         try{
             const data = req.body;
-            const user = await authService.getUserByUsername(data.username);
+            const user = await authService.getUserByUsername(data.username, req.params.role as "support"|"client");
             res.status(200).json({ success:true, email: user.email });            
         }catch (error) {
             res.status(404).json({ success:false, error: error.message || 'Username not found' });

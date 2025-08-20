@@ -7,7 +7,7 @@ export interface IFile {
   path: string;
   bucket: string;
   name: string;
-  type: 'audio'|'image'|'document';
+  type: 'audio'|'image'|'document'
   size: number;
   meta: { duration?: number; width?: number; height?: number };
   client_id?: string;

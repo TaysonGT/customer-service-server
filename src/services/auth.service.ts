@@ -80,7 +80,6 @@ export class AuthService{
     }
 
     async getMyUser(reqUser: SessionUser){
-        console.log(reqUser)
         const user = await userRepo
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.clientProfile', 'clientProfile')
@@ -103,18 +102,18 @@ export class AuthService{
         return safeUser
     }
 
-    async getUserByUsername(username:string){
+    async getUserByUsername(username:string, role: "client"|"support"){
         if(!username) throw new Error('No username provided');
-            
-        const user = await userRepo.findOne({
-            where:{
-                username:username.toLowerCase().trim()
-            }, 
-            relations:{
-                clientProfile: true,
-                adminProfile: true
-            }
-        })
+        if(!role||(role!=='client'&&role!=='support')) throw new Error('User role error')
+        
+
+        const user = await userRepo.createQueryBuilder('users')
+        .where('users.username = :username', {username})
+        .innerJoinAndSelect(
+            role === 'client' ? 'users.clientProfile' : 'users.adminProfile',
+            role === 'client' ? 'clientProfile' : 'adminProfile'
+        )
+        .getOne()
 
         if(!user) throw new Error('User not found');
         return user

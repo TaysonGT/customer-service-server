@@ -6,7 +6,7 @@ export interface IAccount {
   password: string;
   firstname: string;
   lastname: string;
-  clientId: string;
+  userId: string;
   phone?: string;
   avatarUrl?: string;
 }
@@ -43,6 +43,6 @@ export class ClientAccount{
   @ManyToOne(() => User, (user) => user.accounts, { 
     onDelete: 'CASCADE' // Optional but recommended
   })
-  @JoinColumn({ name: 'client_id' }) // Explicit column name
+  @JoinColumn({ name: 'userId' }) // Explicit column name
   user: User;
 }

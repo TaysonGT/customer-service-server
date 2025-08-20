@@ -4,15 +4,15 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
 const fileService = new FileService()
 
-export class ClientDataController {
-    async getClientData(req: Request, res: Response){
-        if(!req.params.clientId){
-            res.json({success:false, message: "clientId not sent"})
+export class UserDataController {
+    async getUserData(req: Request, res: Response){
+        if(!req.params.userId){
+            res.json({success:false, message: "userId not sent"})
             return
         }
         try{
-            const {images, documents} = await fileService.getClientFiles(req.params.clientId)
-            const accounts = await fileService.getClientAccounts(req.params.clientId)
+            const {images, documents} = await fileService.getUserFiles(req.params.userId)
+            const accounts = await fileService.getUserAccounts(req.params.userId)
             res.json({success:true, images, documents, accounts})
         }catch(error){
             res.json({success:false, message: error.message})
@@ -22,7 +22,7 @@ export class ClientDataController {
     async getFile(req: Request, res: Response){
         const {id} = req.params
         
-        fileService.getClientFile(id)
+        fileService.getUserFile(id)
         .then((file)=> res.json({success:true, file}))
         .catch((error)=>{
             res.json({success:false, message: error.message})
@@ -31,8 +31,6 @@ export class ClientDataController {
 
     async createFile(req: AuthenticatedRequest, res: Response){
         const data = req.body
-
-        console.log(req.user)
 
         fileService.newUserFile(data, req.user)
         .then((file)=>{
@@ -44,7 +42,7 @@ export class ClientDataController {
     }
 
     async getImages(req: Request, res: Response){
-        fileService.getClientFilesByType('image', req.params.clientId)
+        fileService.getUserFilesByType('image', req.params.userId)
         .then((images)=>
             res.json({success:true, images})
         ).catch(error=>
@@ -53,7 +51,7 @@ export class ClientDataController {
     }
 
     async getDocs(req: Request, res: Response){
-        fileService.getClientFilesByType('document', req.params.clientId)
+        fileService.getUserFilesByType('document', req.params.userId)
         .then((documents)=>
             res.json({success:true, documents})
         ).catch(error=>
@@ -62,7 +60,7 @@ export class ClientDataController {
     }
 
     async getAccounts(req: Request, res: Response){
-        fileService.getClientAccounts(req.params.clientId)
+        fileService.getUserAccounts(req.params.userId)
         .then((accounts)=>
             res.json({success:true, accounts})
         ).catch(error=>
