@@ -11,14 +11,8 @@ export class IChatMessage {
   @MaxLength(400)
   content: string;
 
-  @IsUUID()
-  senderId: string;
-
   @IsIn(['audio', 'image', 'document', 'text'])
   type: 'audio'|'image'|'document'|'text';
-
-  @IsIn(['client', 'support_agent'])
-  senderType: 'client' | 'support_agent';
 
   @IsUUID()
   chatId: string;
@@ -26,7 +20,6 @@ export class IChatMessage {
 
 export interface IMessageGroup {
   senderId: string;
-  senderType: 'client' | 'support_agent';
   messages: ChatMessage[];
   showHeader: boolean;
   timestamp: Date;
@@ -39,21 +32,13 @@ export interface IMessageGroup {
 
 // Message Entity
 @Entity('chat_messages')
-@Index(['chatId', 'createdAt'])
+@Index(['createdAt'])
 export class ChatMessage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
   content: string;
-
-  @Index()  
-  @Column()
-  senderType: 'client' | 'support_agent'; // Explicit discriminator
-
-  @Index()
-  @Column()
-  senderId: string; // Stores ID of either client or agent
 
   @Column({default: 'text'})
   type?: 'audio'|'image'|'document'|'text';
@@ -68,18 +53,11 @@ export class ChatMessage {
   @JoinColumn({ name: 'file_id' })
   file?: FileMetadata;
 
-  // Virtual relations (TypeORM will hydrate these based on senderType)
-  @ManyToOne(() => User, {
-    nullable: true,
-    createForeignKeyConstraints: false 
-  })
-  @JoinColumn([{ name: 'senderId', referencedColumnName: 'id' }])
-  sender?: User;
+  @ManyToOne(() => User)
+  @JoinColumn([{ name: 'senderId' }])
+  sender: User;
 
   @ManyToOne(()=>Chat, (chat)=>chat.messages)
   @JoinColumn({name: 'chatId'})
   chat: Chat;
-
-  @Column()
-  chatId: string;
 }

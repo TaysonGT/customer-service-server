@@ -1,7 +1,7 @@
 import { myDataSource } from "../app.data-source";
 import { ChatMessage, IChatMessage } from "../entities/message.entity";
 import { Chat } from "../entities/chat.entity";
-import { AuthenticatedRequest } from "../middleware/auth.middleware";
+import { AuthenticatedRequest, SessionUser } from "../middleware/auth.middleware";
 import supabase from "./supabase.service";
 import { User } from "../entities/user.entity";
 import { isUUID } from "class-validator";
@@ -46,9 +46,9 @@ export class ChatService{
 
     }
 
-    async sendMessage(data: IChatMessage) {
-        const message = messageRepo.create({ content:data.content, senderType: data.senderType, senderId: data.senderId, chatId: data.chatId});
-        await messageRepo.save(message); // TypeORM handles the write
+    async sendMessage(data: IChatMessage, user: SessionUser) {
+        const message = messageRepo.create({content:data.content, sender: {id:user.id}, chat: {id: data.chatId}});
+        await messageRepo.save(message);
     }
 
     subscribeToMessages(roomId: string, callback: (message: ChatMessage) => void) {
@@ -74,28 +74,18 @@ export class ChatService{
 
         const chats = await chatRepo
         .createQueryBuilder('chats')
+        .innerJoin('chats.users', 'currentUser', 'currentUser.id = :userId', { userId })
         .leftJoinAndSelect('chats.messages', 'message')
         .leftJoinAndSelect('chats.users', 'users')
         .leftJoinAndSelect('users.clientProfile', 'clientProfile')
-        .where('users.id = :userId', { userId })
+        .leftJoinAndSelect('users.adminProfile', 'adminProfile')
         .orderBy('message.createdAt', 'ASC')
         .getMany()
 
         const chatsWithParticipants = chats.map((chat)=>({
             ...chat,
             lastMessage: chat.messages? chat.messages[chat.messages.length-1] : null,
-            unread_messages: chat.messages?.filter(m => m.senderId !== userId && m.status !== 'seen'),
-            participants:[
-                ...chat.users.map(user => ({
-                    id: user.id,
-                    username: user.username,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    avatarUrl: user.avatarUrl,
-                    role: user.adminProfile? user.adminProfile.role : 'client',
-                    email: user.email
-                }))
-            ]
+            unread_messages: chat.messages?.filter(m => m.sender.id !== userId && m.status !== 'seen'),
         }))
 
         const soleChats = chatsWithParticipants.map((chat) => {
@@ -110,7 +100,7 @@ export class ChatService{
         const query = messageRepo
         .createQueryBuilder('message')
         .leftJoinAndSelect('message.file', 'file')
-        .leftJoinAndMapOne('message.sender', User, 'user')
+        .leftJoinAndSelect('message.sender','user')
         .leftJoinAndSelect('user.clientProfile', 'clientProfile')
         .leftJoinAndSelect('user.adminProfile', 'adminProfile')
         .where('message.chatId = :chatId', { chatId })

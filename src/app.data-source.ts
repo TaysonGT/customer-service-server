@@ -12,7 +12,7 @@ export const myDataSource = new DataSource({
     ssl: true,
     extra: {
         ssl: {rejectUnauthorized: false},
-        connectionTimeoutMillis: 5000,
+        connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000, 
     },
     poolSize: 5, 

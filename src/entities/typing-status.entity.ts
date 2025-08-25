@@ -3,13 +3,15 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
   UpdateDateColumn,
+  Column,
+  Unique,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Chat } from './chat.entity';
 
 @Entity('typing_status')
+@Unique (['chat', 'user']) // Add this decorator
 export class TypingStatus {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -22,9 +24,9 @@ export class TypingStatus {
   @JoinColumn({ name: 'chat_id' })
   chat: Chat;
 
-  @CreateDateColumn()
-  createdAt: Date;
-  
+  @Column({type: 'boolean'})
+  is_typing: boolean
+
   @UpdateDateColumn()
-  updatedAt: Date;
+  last_updated: Date;
 }
