@@ -9,6 +9,7 @@ import authRouter from './routes/auth.route'
 import chatRouter from './routes/chat.route'
 import userDataRouter from './routes/user-data.route'
 import categoryRouter from './routes/category.route'
+import ticketRouter from './routes/ticket.route'
 const app = express()
 
 // Allow all origins in development (Vite proxy will handle security in production)
@@ -31,6 +32,7 @@ app.use('/chats', chatRouter)
 app.use('/clients', clientRouter)
 app.use('/support_agents', agentRouter)
 app.use('/categories', categoryRouter)
+app.use('/tickets', ticketRouter)
 
 myDataSource.initialize().then(()=>{
     app.listen(process.env.PORT, ()=>{

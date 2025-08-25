@@ -30,10 +30,21 @@ export enum TicketPriority {
   CRITICAL = 'critical'
 }
 
-@Entity()
+export interface ITicket {
+  subject: string;
+  description: string;
+  category: string;
+  status: TicketStatus
+  priority: TicketPriority
+  isUrgent?: boolean
+  assignee?: User,
+  requester?: User 
+}
+
+@Entity('tickets')
 export class Ticket {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   subject: string;
@@ -69,7 +80,9 @@ export class Ticket {
   @OneToOne(() => Chat, (chat) => chat.ticket)
   chat: Chat;
 
-  @OneToMany(() => FileMetadata, (file) => file.ticket)
+  @OneToMany(() => FileMetadata, (file) => file.ticket,{
+    cascade: true
+  })
   attachments: FileMetadata[];
 
   @ManyToMany(() => User)
@@ -86,5 +99,5 @@ export class Ticket {
   resolvedAt: Date | null;
 
   @Column({ default: false })
-  isUrgent: boolean;
+  isUrgent?: boolean;
 }

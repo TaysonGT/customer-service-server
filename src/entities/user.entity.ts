@@ -1,5 +1,5 @@
 // src/modules/user/user.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany, ManyToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany, ManyToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { FileMetadata } from './file_metadata.entity';
 import { Ticket } from './ticket.entity';
 import { Chat } from './chat.entity';
@@ -83,21 +83,7 @@ export class User {
   @JoinColumn({ name: 'createdById' })
   createdBy?: User;
 
-  @ManyToMany(() => Chat, chat => chat.users, {
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
-  })
-  @JoinTable({
-    name: 'chat_users',
-    joinColumn: {
-      name: 'user_id',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'chat_id',
-      referencedColumnName: 'id',
-    },
-  })
+  @ManyToMany(() => Chat, chat => chat.users)
   chats: Chat[];
 
   @ManyToOne(() => ServiceCategory, category => category.agents, { nullable: true })

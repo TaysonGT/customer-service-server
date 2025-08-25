@@ -64,6 +64,12 @@ export class AdminProfile {
   @Column({ type: 'jsonb', nullable: true })
   permissions?: { [key: string]: boolean }; // JSON string of specific permissions
 
+  @Column({ type: 'jsonb', nullable: true })
+  workingHours?: { from: string, to: string };
+  
+  @Column({ type: 'jsonb', nullable: true })
+  workingDays?: { from: number, to: number };
+
   @Column({ type: 'boolean', default: false })
   canManageAdmins: boolean;
 

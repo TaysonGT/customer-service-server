@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { createSupabaseServerClient } from './createSupabaseServerClient';
+import { TicketService } from '../services/ticket.service';
+
+const ticketService = new TicketService()
 
 export interface AuthenticatedRequest extends Request {
   user: SessionUser
@@ -28,6 +31,10 @@ export const authenticate = async (
     console.error('Authentication error:', error);
     res.status(401).json({ error: 'Unauthorized' });
     return
+  }
+
+  if(user.user_metadata.role === 'support'){
+    await ticketService.ticketQueue(user.user_metadata.id)
   }
 
   req.user = {

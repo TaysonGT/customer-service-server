@@ -5,10 +5,8 @@ import { ChatService } from "../services/chat.service";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { FileService } from "../services/file.service";
 import { User, UserRole } from "../entities/user.entity";
-import { Ticket } from "../entities/ticket.entity";
 
 const chatRepo = myDataSource.getRepository(Chat)
-const ticketRepo = myDataSource.getRepository(Ticket)
 const userRepo = myDataSource.getRepository(User)
 
 const chatService = new ChatService()
@@ -132,57 +130,6 @@ export class ChatController {
         .getMany()
 
         res.json({success:true, supportAgents});
-    }
-
-    async createTicketChat(req: AuthenticatedRequest, res: Response){
-        try {
-            const ticketId = req.params.ticketId;
-            const {title, description, clientId} = req.body;
-
-            const ticket = await ticketRepo
-            .createQueryBuilder('tickets')
-            .innerJoin('tickets.requester', 'requester', 'requester.id = :clientId', { clientId })
-            .where('tickets.id = :ticketId', { ticketId })
-            .getOne()
-            
-            if (!ticket) {
-                res.status(400).json({ success:false, error: 'Ticket not found!' });
-                return 
-            }
-
-            const client = await userRepo
-            .createQueryBuilder('clients')
-            .innerJoin('clients.clientProfile', 'client') // Filter only
-            .where('clients.id = :clientId', { clientId })
-            .getOne()
-
-            if (!client) {
-                res.status(400).json({ success:false, error: 'Client not found!' });
-                return 
-            }
-
-            if (!client.clientProfile) {
-                res.status(400).json({ success:false, error: 'User is not a client!' });
-                return 
-            }
-
-            const newChat = chatRepo.create({
-                title,
-                description,
-                ticket,
-            })
-
-            chatRepo.save(newChat)
-            .then((chat)=>{
-                res.status(201).json({success: true, message: 'Created new chat successfully',chat})
-                
-            }).catch(error=> {
-                res.status(401).json({success: false, message: 'Error occurred while creating new chat'})
-            })
-
-        }catch(error){
-            res.status(500).json({ error: 'Internal server error' });
-        }
     }
     
     

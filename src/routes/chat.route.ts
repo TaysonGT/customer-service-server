@@ -6,7 +6,6 @@ const chatController = new ChatController()
 const chatRouter = express.Router()
 
 chatRouter.get('/me', authenticate, chatController.getMyChats);
-chatRouter.post('/ticket/:ticketId', authenticate, chatController.createTicketChat);
 chatRouter.get('/files/:messageId', authenticate, chatController.getChatFile)
 chatRouter.post('/files/:messageId', authenticate, chatController.newMessageFile)
 chatRouter.get('/:chatId', authenticate, chatController.getChat)

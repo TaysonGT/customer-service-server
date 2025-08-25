@@ -36,9 +36,7 @@ export class Chat{
   @UpdateDateColumn()
   updatedAt: Date;
   
-  @ManyToMany(() => User, (user) => user.chats,{
-    onDelete: 'CASCADE', // Optional but recommended
-  })
+  @ManyToMany(() => User, (user) => user.chats)
   @JoinTable({
     name: 'chat_users', // Explicit join table name
     joinColumn: {
