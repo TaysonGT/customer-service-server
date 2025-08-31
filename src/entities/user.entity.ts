@@ -20,6 +20,7 @@ export interface IUser {
   firstname: string;
   lastname: string;
   email: string;
+  gender: 'male'|'female';
   serviceCategory?: ServiceCategory,
   avatarUrl?: string;
   phone?: string;
@@ -47,15 +48,18 @@ export class User {
 
   @Column()
   lastname: string;
-
+  
   @Column({ nullable: true })
   avatarUrl?: string;
-
+  
   @Column({ nullable: true })
   phone?: string;
-
+  
   @Column({ nullable: true })
   countryCode?: string;
+  
+  @Column({enum: ['male', 'female'], default: 'male'})
+  gender: 'male' | 'female';
 
   // System fields
   @CreateDateColumn()

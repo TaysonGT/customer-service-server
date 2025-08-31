@@ -65,6 +65,7 @@ export class AgentService{
                 username: trimmedUsername,
                 email: data.email,
                 avatarUrl: data.avatarUrl,
+                gender: data.gender,
                 serviceCategory: category,
                 phone: fullNumber
             }

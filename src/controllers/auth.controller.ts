@@ -102,4 +102,13 @@ export class AuthController {
             res.status(404).json({ success:false, error: error.message || 'User not found' });
         }
     }
+
+    async updateLastSeen(req: AuthenticatedRequest, res: Response) {
+        try{
+            await authService.updateLastSeen(req.user);
+            res.status(200).json({ success:true });            
+        }catch (error) {
+            res.status(404).json({ success:false, error: error.message || 'User not found' });
+        }
+    }
 }

@@ -210,7 +210,7 @@ export class TicketService{
         const user = await userRepo
         .createQueryBuilder('users')
         .innerJoinAndSelect('users.adminProfile', 'adminProfile')
-        .leftJoinAndSelect('users.assignedTickets', 'assignedTickets', 'assignedTickets.status != :status', {status: TicketStatus.CLOSED})
+        .leftJoinAndSelect('users.assignedTickets', 'assignedTickets', 'assignedTickets.status != :status', {status: TicketStatus.RESOLVED})
         .where('users.id = :userId', {userId})
         .getOne()
     

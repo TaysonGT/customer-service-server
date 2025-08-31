@@ -7,9 +7,11 @@ const chatRouter = express.Router()
 
 chatRouter.get('/me', authenticate, chatController.getMyChats);
 chatRouter.get('/files/:messageId', authenticate, chatController.getChatFile)
-chatRouter.post('/files/:messageId', authenticate, chatController.newMessageFile)
 chatRouter.get('/:chatId', authenticate, chatController.getChat)
 chatRouter.get('/:chatId/messages', authenticate, chatController.getChatMessages)
+chatRouter.get('/:chatId/participants', authenticate, chatController.getChatParticipants)
+chatRouter.get('/messages/:messageId', authenticate, chatController.getSingleMessage)
 chatRouter.post('/:chatId/messages', authenticate, chatController.sendMessage)
+chatRouter.patch('/:chatId/messages/seen', authenticate, chatController.markMessagesAsSeen)
 
 export default chatRouter

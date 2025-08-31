@@ -50,7 +50,6 @@ export class FileMetadata {
   @OneToOne(() => ChatMessage, (message) => message.file, {
     onDelete: 'CASCADE'
   })
-  @JoinColumn({name: 'message_id'})
   message?: ChatMessage;
 
   @ManyToOne(() => User, (user) => user.files, { 

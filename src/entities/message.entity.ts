@@ -13,9 +13,18 @@ export class IChatMessage {
 
   @IsIn(['audio', 'image', 'document', 'text'])
   type: 'audio'|'image'|'document'|'text';
-
+  
   @IsUUID()
   chatId: string;
+  
+  @IsUUID()
+  senderId: string;
+  
+  @IsUUID()
+  file_id: string;
+  
+  @IsIn(['delivered', 'seen'])
+  status: 'delivered'|'seen';
 }
 
 export interface IMessageGroup {
@@ -39,6 +48,12 @@ export class ChatMessage {
 
   @Column()
   content: string;
+  
+  @Column({nullable: true})
+  senderId?: string;
+
+  @Column({nullable: true})
+  file_id?: string;
 
   @Column({default: 'text'})
   type?: 'audio'|'image'|'document'|'text';

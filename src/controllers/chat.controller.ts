@@ -4,7 +4,7 @@ import { Chat } from "../entities/chat.entity";
 import { ChatService } from "../services/chat.service";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { FileService } from "../services/file.service";
-import { User, UserRole } from "../entities/user.entity";
+import { User } from "../entities/user.entity";
 
 const chatRepo = myDataSource.getRepository(Chat)
 const userRepo = myDataSource.getRepository(User)
@@ -52,18 +52,9 @@ export class ChatController {
     }
 
     async sendMessage(req: AuthenticatedRequest, res: Response){
-        await chatService.createMessage(req)
+        await chatService.sendMessage(req.body, req.user)
         .then((message)=>{
             res.json({ success: true, message });
-        }).catch(error=>{
-            res.json({success:false, message: error.message})
-        })
-    }
-
-    async newMessageFile(req: AuthenticatedRequest, res: Response){
-        await fileService.createMessageWithFile(req.body)
-        .then((file)=>{
-            res.json({ success: true, file });
         }).catch(error=>{
             res.json({success:false, message: error.message})
         })
@@ -78,42 +69,37 @@ export class ChatController {
         })
     }
 
+    async getChatParticipants(req: AuthenticatedRequest, res: Response){
+        await chatService.getChatUsers(req.params.chatId, req.user)
+        .then((users)=>{
+            res.json({ success: true, users });
+        }).catch(error=>{
+            res.json({success:false, message: error.message})
+        })
+    }
+
     async getChatMessages(req: Request, res: Response){
         const { chatId } = req.params
-        const { cursor, limit, initial }:messageParams = req.query
+        const { cursor, limit }:messageParams = req.query
 
         let parsedLimit = limit? parseInt(limit): undefined
-        
-        let participants: {
-            id: string;
-            username: string;
-            firstname: string;
-            lastname: string;
-            avatarUrl?: string;
-            role: UserRole;
-            email: string;
-        }[] = []
-
-        if(initial === 'true'){
-            const users = await userRepo
-            .find({where:{chats:{id:chatId}}, relations:{chats: true, clientProfile: true, adminProfile: true}})
-
-            participants = [
-            ...users.map(a => ({
-                id: a.id,
-                username: a.username,
-                firstname: a.firstname,
-                lastname: a.lastname,
-                avatarUrl: a.avatarUrl,
-                role: a.clientProfile ? 'client' as UserRole : a.adminProfile ? a.adminProfile.role : 'support' as UserRole,
-                email: a.email
-            }))
-        ];
-        }
 
         chatService.getMessages(chatId, parsedLimit, cursor)
         .then(({data, nextCursor})=>{
-            res.json({success:true, messages: data, nextCursor, participants})
+            res.json({success:true, messages: data, nextCursor})
+        }).catch(error=>
+            res.status(400).json({message: error.message, success:false})
+        )
+
+    }
+
+    async markMessagesAsSeen(req: AuthenticatedRequest, res: Response){
+        const { chatId } = req.params
+        const { cursor }:messageParams = req.query
+
+        chatService.markMessagesAsSeen(chatId, req.user, cursor)
+        .then((result)=>{
+            res.json({success:true, result})
         }).catch(error=>
             res.status(400).json({message: error.message, success:false})
         )
@@ -150,4 +136,16 @@ export class ChatController {
             res.status(500).json({ success:false, error: 'Internal server error' });
         }
     };
+
+    async getSingleMessage(req: AuthenticatedRequest, res: Response) {
+        const {messageId} = req.params
+        const {cursor}:messageParams = req.query
+
+        chatService.getMessage(messageId, cursor)
+        .then((message)=>{
+            res.json({success:true, message})
+        }).catch(error=>
+            res.status(400).json({message: error.message, success:false})
+        )   
+    }
 }

@@ -10,5 +10,6 @@ authRouter.post('/refresh', authController.refreshToken)
 authRouter.post('/username-resolve/:role', authController.resolveUsername)
 authRouter.get('/user/me', authenticate, authController.getMyProfile)
 authRouter.get('/user/:id', authController.getUserById)
+authRouter.patch('/seen', authenticate, authController.updateLastSeen)
 
 export default authRouter

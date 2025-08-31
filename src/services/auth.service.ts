@@ -102,6 +102,16 @@ export class AuthService{
         return safeUser
     }
 
+    async updateLastSeen(user: SessionUser){
+        const result = await userRepo.update(
+            {id: user.id},
+            {lastSeenAt: new Date()}
+        )
+
+        if(result.affected === 0) throw new Error('User not found')
+        return result
+    }
+
     async getUserByUsername(username:string, role: "client"|"support"){
         if(!username) throw new Error('No username provided');
         if(!role||(role!=='client'&&role!=='support')) throw new Error('User role error')

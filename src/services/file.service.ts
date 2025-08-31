@@ -3,12 +3,10 @@ import { ClientAccount, IAccount } from "../entities/client_acount.entity";
 import { isUUID } from "class-validator";
 import { SessionUser } from "../middleware/auth.middleware";
 import { FileMetadata, IFile } from "../entities/file_metadata.entity";
-import { ChatMessage, IChatMessage } from "../entities/message.entity";
 import { User } from "../entities/user.entity";
 
 const fileRepo = myDataSource.getRepository(FileMetadata)
 const accountRepo = myDataSource.getRepository(ClientAccount)
-const messageRepo = myDataSource.getRepository(ChatMessage)
 
 export class FileService{
 
@@ -113,39 +111,8 @@ export class FileService{
     
     async getChatFile(messageId: string){
         if(!isUUID(messageId)) throw new Error(`Invalid Id: \"${messageId}\"`);
-        return await fileRepo.findOne({where:{message:{id:messageId}}, relations:{message: true}})
-    }
-    
-    // New endpoint in your backend
-    async createMessageWithFile(
-        messageData: IChatMessage,
-        fileData?: IFile
-    ) {
-    return messageRepo.manager.transaction(async (transactionalEntityManager) => {
-        // Create message first
-        const message = transactionalEntityManager.create(ChatMessage, {
-            ...messageData,
-            status: 'delivered'
-        });
-        
-        await transactionalEntityManager.save(message);
-
-        // If file exists, create and link it
-        if (fileData) {
-            const fileMetadata = transactionalEntityManager.create(FileMetadata, {
-                ...fileData,
-                message
-            });
-            
-            await transactionalEntityManager.save(fileMetadata);
-            
-            // Update message with file reference
-            message.file = fileMetadata;
-            await transactionalEntityManager.save(message);
-        }
-
-        return message;
-    });
-    }
-
+        return await fileRepo.createQueryBuilder('file')
+        .innerJoin('file.message', 'message', 'message.id = :messageId', {messageId})
+        .getOne()
+    }  
 }
