@@ -12,13 +12,12 @@ import categoryRouter from './routes/category.route'
 import ticketRouter from './routes/ticket.route'
 const app = express()
 
-// Allow all origins in development (Vite proxy will handle security in production)
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [process.env.FRONTEND_BASE_URL!, 'http://localhost:5173', 'http://localhost:4173']
-    : true // Allows all origins in dev
+    : true, // Allows all origins in dev
+  credentials: true
 }));
-
 
 app.use(express.json())
 app.use(CookieParser())
