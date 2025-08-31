@@ -15,7 +15,7 @@ const app = express()
 // Allow all origins in development (Vite proxy will handle security in production)
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-production-domain.com']
+    ? [process.env.FRONTEND_BASE_URL!, 'http://localhost:5173', 'http://localhost:4173']
     : true // Allows all origins in dev
 }));
 
