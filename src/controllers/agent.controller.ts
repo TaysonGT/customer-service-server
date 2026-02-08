@@ -27,7 +27,6 @@ export class AgentController {
         .then(({user})=>{
             res.status(201).json({message: 'Support Agent created successfully', success: true, user})
         }).catch((error)=>{
-            console.log(error)
             res.status(400).json({message: error.message, success: false})
         })
         

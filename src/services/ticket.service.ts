@@ -192,6 +192,7 @@ export class TicketService{
             .createQueryBuilder("tickets")
             .innerJoinAndSelect('tickets.assignee', 'assignee')
             .leftJoinAndSelect('tickets.chat', 'chat')
+            .leftJoinAndSelect('tickets.requester', 'requester')
             .leftJoinAndSelect('chat.users', 'users')
             .leftJoinAndSelect('chat.messages', 'messages', "messages.status != :status", {status: 'seen'})
             .orderBy('messages.createdAt', 'DESC')

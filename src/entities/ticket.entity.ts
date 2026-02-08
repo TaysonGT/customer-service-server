@@ -52,14 +52,6 @@ export class Ticket {
   @Column('text')
   description: string;
 
-  @ManyToOne(() => User, (user) => user.submittedTickets)
-  @JoinColumn({ name: 'requester_id' })
-  requester: User;
-
-  @ManyToOne(() => User, (user) => user.assignedTickets, { nullable: true })
-  @JoinColumn({ name: 'assignee_id' })
-  assignee?: User | null;
-
   @Column({
     type: 'enum',
     enum: TicketStatus,
@@ -73,21 +65,9 @@ export class Ticket {
     default: TicketPriority.MEDIUM
   })
   priority: TicketPriority;
-
+  
   @Column({ nullable: true })
   category: string;
-
-  @OneToOne(() => Chat, (chat) => chat.ticket)
-  chat: Chat;
-
-  @OneToMany(() => FileMetadata, (file) => file.ticket,{
-    cascade: true
-  })
-  attachments: FileMetadata[];
-
-  @ManyToMany(() => User)
-  @JoinTable({ name: 'ticket_cc_agents' })
-  ccRecipients: User[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
@@ -100,4 +80,24 @@ export class Ticket {
 
   @Column({ default: false })
   isUrgent?: boolean;
+  
+  @ManyToOne(() => User, (user) => user.submittedTickets)
+  @JoinColumn({ name: 'requester_id' })
+  requester: User;
+
+  @ManyToOne(() => User, (user) => user.assignedTickets, { nullable: true })
+  @JoinColumn({ name: 'assignee_id' })
+  assignee?: User | null;
+
+  @OneToOne(() => Chat, (chat) => chat.ticket)
+  chat: Chat;
+
+  @OneToMany(() => FileMetadata, (file) => file.ticket,{
+    cascade: true
+  })
+  attachments: FileMetadata[];
+
+  @ManyToMany(() => User)
+  @JoinTable({ name: 'ticket_cc_agents' })
+  ccRecipients: User[];
 }

@@ -85,8 +85,8 @@ export class ChatController {
         let parsedLimit = limit? parseInt(limit): undefined
 
         chatService.getMessages(chatId, parsedLimit, cursor)
-        .then(({data, nextCursor})=>{
-            res.json({success:true, messages: data, nextCursor})
+        .then(({messages, nextCursor, fileMessages})=>{
+            res.json({success:true, messages, fileMessages, nextCursor})
         }).catch(error=>
             res.status(400).json({message: error.message, success:false})
         )
@@ -118,7 +118,6 @@ export class ChatController {
         res.json({success:true, supportAgents});
     }
     
-    
     async getMyChats(req: AuthenticatedRequest, res: Response) {
         try {
             const userId = req.user?.id;
@@ -137,6 +136,24 @@ export class ChatController {
         }
     };
 
+    async getMyUnreadChats(req: AuthenticatedRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            
+            if (!userId) {
+                res.status(403).json({ success:false, error: 'Unauthorized' });
+                return 
+            }
+
+            const unreadChats = await chatService.getUserUnreadChats(userId)
+            res.json({success:true, unreadChats});
+            
+        } catch (error) {
+            console.error('Error fetching chats:', error);
+            res.status(500).json({ success:false, error: 'Internal server error' });
+        }
+    };
+
     async getSingleMessage(req: AuthenticatedRequest, res: Response) {
         const {messageId} = req.params
         const {cursor}:messageParams = req.query
@@ -148,4 +165,16 @@ export class ChatController {
             res.status(400).json({message: error.message, success:false})
         )   
     }
+    
+    async getChatFiles(req: AuthenticatedRequest, res: Response) {
+        const {chatId} = req.params
+
+        fileService.getChatFiles(chatId)
+        .then((files)=>{
+            res.json({success:true, files})
+        }).catch(error=>
+            res.status(400).json({message: error.message, success:false})
+        )   
+    }
+    
 }

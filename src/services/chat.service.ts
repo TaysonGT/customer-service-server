@@ -73,6 +73,10 @@ export class ChatService{
         .leftJoinAndSelect('chats.users', 'users')
         .leftJoinAndSelect('users.clientProfile', 'clientProfile')
         .leftJoinAndSelect('users.adminProfile', 'adminProfile')
+        .leftJoinAndSelect('chats.ticket', 'ticket')
+        .leftJoinAndSelect('ticket.assignee', 'assignee')
+        .leftJoinAndSelect('ticket.requester', 'requester')
+        // .loadRelationIdAndMap('chats.ticketId', 'chats.ticket')
         .orderBy('messages.createdAt', 'ASC')
         .getMany()
 
@@ -88,6 +92,26 @@ export class ChatService{
         });
 
         return soleChats;
+    }
+
+    async getUserUnreadChats(userId: string){
+        const isValid = isUUID(userId)
+
+        if(!isValid) throw new Error('Invalid user_id')
+
+        const chats = await chatRepo
+        .createQueryBuilder('chats')
+        .innerJoin('chats.users', 'currentUser', 'currentUser.id = :userId', { userId })
+        .leftJoinAndSelect('chats.messages', 'messages')
+        .leftJoinAndSelect('chats.users', 'users')
+        .leftJoinAndSelect('messages.sender', 'sender')
+        .orderBy('messages.createdAt', 'ASC')
+        .getMany()
+
+        return chats.map(c=>({
+            id: c.id, 
+            unread_messages: c.messages?.filter(m => m.sender.id !== userId && m.status !== 'seen').length
+        }));
     }
 
     async getChatUsers(chatId: string, user: SessionUser){
@@ -130,13 +154,21 @@ export class ChatService{
         const hasMore = messages.length > realLimit;
         const trimmedMessages = hasMore ? messages.slice(0, realLimit) : messages;
 
+        const fileMessages = await messageRepo
+        .createQueryBuilder('message')
+        .innerJoinAndSelect('message.file', 'file')
+        .innerJoin('message.chat','chat', 'message.chatId = :chatId', { chatId })
+        .orderBy('message.createdAt', 'DESC')
+        .getMany()
+
         const nextCursor = hasMore
             ? trimmedMessages[trimmedMessages.length - 1]?.createdAt
             : undefined;
 
         return {
-            data: trimmedMessages.reverse(),
+            messages: trimmedMessages.reverse(),
             nextCursor,
+            fileMessages
         };
     }
 
@@ -150,11 +182,11 @@ export class ChatService{
         .where('message.id = :messageId', { messageId })
         .getOne()
         
-        if(message&&cursor){
-            console.log(new Date(cursor))
-            console.log(new Date(message.createdAt))
-            console.log(new Date(message.createdAt) < new Date(cursor))
-        }
+        // if(message&&cursor){
+        //     console.log(new Date(cursor))
+        //     console.log(new Date(message.createdAt))
+        //     console.log(new Date(message.createdAt) < new Date(cursor))
+        // }
         return message
     }
 

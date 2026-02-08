@@ -114,5 +114,13 @@ export class FileService{
         return await fileRepo.createQueryBuilder('file')
         .innerJoin('file.message', 'message', 'message.id = :messageId', {messageId})
         .getOne()
-    }  
+    }
+
+    async getChatFiles(chatId: string){
+        if(!isUUID(chatId)) throw new Error(`Invalid Id: \"${chatId}\"`);
+        return await fileRepo.createQueryBuilder('file')
+        .innerJoin('file.message', 'message')
+        .innerJoin('message.chat', 'chat', 'chat.id = :chatId', {chatId})
+        .getMany()
+    }
 }
