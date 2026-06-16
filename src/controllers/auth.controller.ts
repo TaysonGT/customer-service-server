@@ -86,7 +86,7 @@ export class AuthController {
 
     async getUserById(req: Request, res: Response) {
         try{
-            const {id} = req.params;
+            const {id} = req.params as {id:string}
             const user = await authService.getUserById(id);
             res.status(200).json({ success:true, user });            
         }catch (error) {

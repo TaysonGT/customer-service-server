@@ -15,7 +15,7 @@ export class AgentController {
     }
 
     async getAgent(req: Request, res: Response){
-        const {id} = req.params
+        const {id} = req.params as {id:string}
         const agent = await agentRepo.findOne({where:{id}})
         res.json({success:true, agent})
     }

@@ -27,7 +27,7 @@ export class ClientController {
     }
     
     async getClient(req: Request, res: Response){
-        const {id} = req.params
+        const {id} = req.params as {id:string}
         clientService.getClientById(id)
         .then((client)=>{
             if(client){

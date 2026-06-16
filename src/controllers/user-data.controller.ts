@@ -6,13 +6,14 @@ const fileService = new FileService()
 
 export class UserDataController {
     async getUserData(req: Request, res: Response){
-        if(!req.params.userId){
+        const {userId} = req.params as {userId:string}
+        if(!userId){
             res.json({success:false, message: "userId not sent"})
             return
         }
         try{
-            const {images, documents} = await fileService.getUserFiles(req.params.userId)
-            const accounts = await fileService.getUserAccounts(req.params.userId)
+            const {images, documents} = await fileService.getUserFiles(userId)
+            const accounts = await fileService.getUserAccounts(userId)
             res.json({success:true, images, documents, accounts})
         }catch(error){
             res.json({success:false, message: error.message})
@@ -20,7 +21,7 @@ export class UserDataController {
     }
 
     async getFile(req: Request, res: Response){
-        const {id} = req.params
+        const {id} = req.params as {id:string}
         
         fileService.getUserFile(id)
         .then((file)=> res.json({success:true, file}))
@@ -42,7 +43,8 @@ export class UserDataController {
     }
 
     async getImages(req: Request, res: Response){
-        fileService.getUserFilesByType('image', req.params.userId)
+        const {userId} = req.params as {userId:string}
+        fileService.getUserFilesByType('image', userId)
         .then((images)=>
             res.json({success:true, images})
         ).catch(error=>
@@ -51,7 +53,8 @@ export class UserDataController {
     }
 
     async getDocs(req: Request, res: Response){
-        fileService.getUserFilesByType('document', req.params.userId)
+        const {userId} = req.params as {userId:string}
+        fileService.getUserFilesByType('document', userId)
         .then((documents)=>
             res.json({success:true, documents})
         ).catch(error=>
@@ -60,7 +63,8 @@ export class UserDataController {
     }
 
     async getAccounts(req: Request, res: Response){
-        fileService.getUserAccounts(req.params.userId)
+        const {userId} = req.params as {userId:string}
+        fileService.getUserAccounts(userId)
         .then((accounts)=>
             res.json({success:true, accounts})
         ).catch(error=>

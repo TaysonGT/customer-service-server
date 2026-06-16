@@ -27,7 +27,7 @@ export class ChatController {
     }
 
     async getChat(req: AuthenticatedRequest, res: Response){
-        const chatId = req.params.chatId
+        const {chatId} = req.params as {chatId:string}
         const user = req.user
     
         const chat = await chatRepo.findOne({where:{id:chatId}, relations:{
@@ -61,7 +61,8 @@ export class ChatController {
     }
 
     async getChatFile(req: AuthenticatedRequest, res: Response){
-        await fileService.getChatFile(req.params.messageId)
+        const {messageId} = req.params as {messageId:string}
+        await fileService.getChatFile(messageId)
         .then((file)=>{
             res.json({ success: true, file });
         }).catch(error=>{
@@ -70,7 +71,8 @@ export class ChatController {
     }
 
     async getChatParticipants(req: AuthenticatedRequest, res: Response){
-        await chatService.getChatUsers(req.params.chatId, req.user)
+        const {chatId} = req.params as {chatId:string}
+        await chatService.getChatUsers(chatId, req.user)
         .then((users)=>{
             res.json({ success: true, users });
         }).catch(error=>{
@@ -79,7 +81,7 @@ export class ChatController {
     }
 
     async getChatMessages(req: Request, res: Response){
-        const { chatId } = req.params
+        const { chatId } = req.params as {chatId:string}
         const { cursor, limit }:messageParams = req.query
 
         let parsedLimit = limit? parseInt(limit): undefined
@@ -94,7 +96,7 @@ export class ChatController {
     }
 
     async markMessagesAsSeen(req: AuthenticatedRequest, res: Response){
-        const { chatId } = req.params
+        const { chatId } = req.params as {chatId:string}
         const { cursor }:messageParams = req.query
 
         chatService.markMessagesAsSeen(chatId, req.user, cursor)
@@ -155,7 +157,7 @@ export class ChatController {
     };
 
     async getSingleMessage(req: AuthenticatedRequest, res: Response) {
-        const {messageId} = req.params
+        const {messageId} = req.params as {messageId:string}
         const {cursor}:messageParams = req.query
 
         chatService.getMessage(messageId, cursor)
@@ -167,7 +169,7 @@ export class ChatController {
     }
     
     async getChatFiles(req: AuthenticatedRequest, res: Response) {
-        const {chatId} = req.params
+        const {chatId} = req.params as {chatId:string}
 
         fileService.getChatFiles(chatId)
         .then((files)=>{

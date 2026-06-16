@@ -11,6 +11,7 @@
       "importHelpers": true,
       "module": "commonjs",
       "moduleResolution": "node",
+      "ignoreDeprecations": "6.0",
       "noFallthroughCasesInSwitch": true,
       "noImplicitAny": true,
       "noImplicitReturns": true,
@@ -26,9 +27,6 @@
       "strict": true,
       "skipLibCheck": true,
       "esModuleInterop": true,
-      "typeRoots": [
-        "./types",
-    ]
   },
   "include": [
     "sample",

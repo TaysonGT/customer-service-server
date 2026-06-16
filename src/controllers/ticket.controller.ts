@@ -33,7 +33,7 @@ export class TicketController {
     }
 
     async getTicketAttachments(req: AuthenticatedRequest, res: Response){
-        const {ticketId} = req.params
+        const {ticketId} = req.params as {ticketId:string}
         const user = req.user
         
         ticketService.getTicketAttachments(parseInt(ticketId), user)
@@ -42,7 +42,7 @@ export class TicketController {
     }
 
     async getTicket(req: AuthenticatedRequest, res: Response){
-        const {ticketId} = req.params
+        const {ticketId} = req.params as {ticketId:string}
         const user = req.user
     
         const query = ticketRepo
@@ -85,7 +85,8 @@ export class TicketController {
     }
 
     async closeTicket(req: AuthenticatedRequest, res: Response){
-        await ticketService.closeTicket(parseInt(req.params.ticketId), req.user)
+        const {ticketId} = req.params as {ticketId:string}
+        await ticketService.closeTicket(parseInt(ticketId), req.user)
         .then((ticket)=>{
             res.json({ success: true, ticket, message: 'Ticket closed successfully' });
         }).catch(error=>{
@@ -94,7 +95,8 @@ export class TicketController {
     }
 
     async attachFilesToTicket(req: AuthenticatedRequest, res: Response){
-        await ticketService.attachFilesToTicket(req.body, parseInt(req.params.ticketId), req.user.id)
+        const {ticketId} = req.params as {ticketId:string}
+        await ticketService.attachFilesToTicket(req.body, parseInt(ticketId), req.user.id)
         .then((ticket)=>{
             res.json({ success: true, ticket });
         }).catch(error=>{
@@ -112,7 +114,8 @@ export class TicketController {
     }
 
     async createTicketChat(req: AuthenticatedRequest, res: Response){
-        await ticketService.startTicketChat(req.body, parseInt(req.params.ticketId))
+        const {ticketId} = req.params as {ticketId:string}
+        await ticketService.startTicketChat(req.body, parseInt(ticketId))
         .then((chat)=>{
             res.status(201).json({success: true, message: 'Created new chat successfully',chat})
         }).catch(error=> {
@@ -121,7 +124,8 @@ export class TicketController {
     }
 
     async assignTicketToAgent(req: AuthenticatedRequest, res: Response){
-        await ticketService.startTicketChat(req.body, parseInt(req.params.ticketId))
+        const {ticketId} = req.params as {ticketId:string}
+        await ticketService.startTicketChat(req.body, parseInt(ticketId))
         .then((chat)=>{
             res.status(201).json({success: true, message: 'Created new chat successfully',chat})
         }).catch(error=> {
